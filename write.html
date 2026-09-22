@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Write a new entry</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Serif:ital,wght@0,400;0,500;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css" />
+<style>
+  .form-wrap { max-width: 720px; margin: 0 auto; padding: 48px 28px 100px; }
+  .field { margin-bottom: 22px; }
+  label { display: block; font-family: var(--font-head); font-size: 14px; color: var(--text-muted); margin-bottom: 6px; }
+  input, textarea, select {
+    width: 100%; background: var(--panel); border: 1px solid var(--panel-border);
+    color: var(--text); font-family: var(--font-body); font-size: 16px;
+    padding: 10px 12px; border-radius: 4px;
+  }
+  textarea { min-height: 180px; resize: vertical; font-family: var(--font-mono); font-size: 14px; line-height: 1.6; }
+  .hint { font-family: var(--font-mono); font-size: 12.5px; color: var(--text-muted); margin-top: 6px; }
+  .checkbox-row { display: flex; align-items: center; gap: 8px; }
+  .checkbox-row input { width: auto; }
+  button {
+    font-family: var(--font-head); font-size: 15px; font-weight: 600;
+    background: var(--accent); color: #1B1300; border: none;
+    padding: 12px 22px; border-radius: 4px; cursor: pointer;
+  }
+  button:hover { opacity: 0.9; }
+  #output-wrap { display: none; margin-top: 36px; }
+  #output {
+    width: 100%; min-height: 300px; background: #0A0D16; color: #B7E8A8;
+    font-family: var(--font-mono); font-size: 13px; padding: 16px; border-radius: 6px;
+    border: 1px solid var(--panel-border); white-space: pre; overflow-x: auto;
+  }
+  .steps { font-family: var(--font-mono); font-size: 13.5px; color: var(--text-muted); margin: 14px 0 0; padding-left: 18px; }
+  .steps li { margin-bottom: 6px; }
+</style>
+</head>
+<body>
+
+  <header class="site-header">
+    <div class="wrap">
+      <div class="site-mark">deepak<span>.</span>chigal</div>
+      <nav class="site-nav">
+        <a href="index.html">Home</a>
+        <a href="archive.html">Archive</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="form-wrap">
+    <p class="hero-eyebrow">Local tool — nothing here is uploaded anywhere</p>
+    <h1 style="font-family: var(--font-head); font-size: 28px; margin: 0 0 8px;">Write a new entry</h1>
+    <p style="color: var(--text-muted); margin: 0 0 32px;">Fill this in, generate the snippet, then paste it into <code>js/posts.js</code> yourself. This page runs entirely in your browser — nothing is saved or sent anywhere.</p>
+
+    <div class="field">
+      <label for="title">Title</label>
+      <input id="title" type="text" placeholder="Why AI Agents Need Their Own Security Perimeter" />
+    </div>
+
+    <div class="field">
+      <label for="subtitle">Subtitle (one line, shown under the title)</label>
+      <input id="subtitle" type="text" placeholder="Treating an agent like a user account misses most of the actual risk." />
+    </div>
+
+    <div class="field">
+      <label for="date">Date</label>
+      <input id="date" type="date" />
+    </div>
+
+    <div class="field">
+      <label for="category">Category (pick one — this drives the filter tabs)</label>
+      <select id="category">
+        <option>AI Security</option>
+        <option>Cloud Security</option>
+        <option>DevSecOps</option>
+        <option>Automation</option>
+        <option>Career</option>
+      </select>
+      <p class="hint">To add a new category permanently, edit js/categories.js.</p>
+    </div>
+
+    <div class="field">
+      <label for="tags">Extra tags (comma-separated, shown on the post page)</label>
+      <input id="tags" type="text" placeholder="MCP, Governance, Zero Trust" />
+    </div>
+
+    <div class="field">
+      <label for="excerpt">Excerpt (1–2 sentences, used if no subtitle is set)</label>
+      <input id="excerpt" type="text" placeholder="A short summary that pulls someone into the full entry." />
+    </div>
+
+    <div class="field checkbox-row">
+      <input id="featured" type="checkbox" />
+      <label for="featured" style="margin: 0;">Feature this on the homepage (keep to 1–2 posts at a time)</label>
+    </div>
+
+    <div class="field">
+      <label for="content">Content</label>
+      <textarea id="content" placeholder="Write in plain paragraphs, separated by a blank line. You can also use HTML tags like &lt;h2&gt;, &lt;ul&gt;&lt;li&gt;, &lt;code&gt;, &lt;pre&gt; directly for more structure."></textarea>
+      <p class="hint">Plain paragraphs (separated by a blank line) are auto-wrapped in &lt;p&gt; tags. HTML you type is kept as-is.</p>
+    </div>
+
+    <button onclick="generate()">Generate post code</button>
+
+    <div id="output-wrap">
+      <label style="margin-top: 28px;">Paste this at the TOP of the POSTS array in js/posts.js</label>
+      <textarea id="output" readonly></textarea>
+      <div style="margin-top: 12px;">
+        <button onclick="copyOutput()">Copy to clipboard</button>
+      </div>
+      <ol class="steps">
+        <li>Copy the code above.</li>
+        <li>Open js/posts.js in any text editor.</li>
+        <li>Paste it as the first item inside the POSTS = [ ... ] array, right after the opening bracket.</li>
+        <li>Save the file and re-upload it to your host (or git push).</li>
+      </ol>
+    </div>
+  </main>
+
+  <script>
+    document.getElementById('date').valueAsDate = new Date();
+
+    function slugify(str) {
+      return str.toLowerCase().trim()
+        .replace(/[^a-z0-9\s-]/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-');
+    }
+
+    function paragraphize(text) {
+      const trimmed = text.trim();
+      if (/<[a-z][\s\S]*>/i.test(trimmed)) {
+        return trimmed; // already contains HTML — leave as-is
+      }
+      return trimmed
+        .split(/\n\s*\n/)
+        .map(p => '<p>' + p.trim().replace(/\n/g, '<br>') + '</p>')
+        .join('\n');
+    }
+
+    function generate() {
+      const title = document.getElementById('title').value.trim();
+      const subtitle = document.getElementById('subtitle').value.trim();
+      const date = document.getElementById('date').value;
+      const category = document.getElementById('category').value;
+      const tags = document.getElementById('tags').value.split(',').map(t => t.trim()).filter(Boolean);
+      const excerpt = document.getElementById('excerpt').value.trim();
+      const featured = document.getElementById('featured').checked;
+      const content = document.getElementById('content').value;
+
+      if (!title || !date || !excerpt || !content.trim()) {
+        alert('Please fill in at least title, date, excerpt, and content.');
+        return;
+      }
+
+      const slug = slugify(title);
+      const contentHTML = paragraphize(content);
+      const allTags = [category, ...tags.filter(t => t !== category)];
+
+      const snippet =
+`  {
+    slug: ${JSON.stringify(slug)},
+    title: ${JSON.stringify(title)},
+    subtitle: ${JSON.stringify(subtitle)},
+    date: ${JSON.stringify(date)},
+    category: ${JSON.stringify(category)},
+    tags: ${JSON.stringify(allTags)},
+    featured: ${featured},
+    excerpt: ${JSON.stringify(excerpt)},
+    contentHTML: \`
+${contentHTML}
+    \`,
+  },`;
+
+      document.getElementById('output').value = snippet;
+      document.getElementById('output-wrap').style.display = 'block';
+      document.getElementById('output-wrap').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function copyOutput() {
+      const out = document.getElementById('output');
+      out.select();
+      document.execCommand('copy');
+    }
+  </script>
+</body>
+</html>
